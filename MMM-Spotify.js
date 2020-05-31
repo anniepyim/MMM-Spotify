@@ -115,11 +115,39 @@ Module.register("MMM-Spotify", {
           (this.config.allowDevices.length === 0)
           || (this.config.allowDevices.length >= 1 && this.config.allowDevices.includes(payload.device.name))
         ) {
+
+          if (payload.is_playing) {
+          let modules =
+                MM.getModules().filter(m => {
+                    return (m.name === "MMM-Spotify");
+                });
+          if (typeof modules === "undefined") { return; }
+          modules.forEach((mod) => {
+                if (mod.hidden) {
+                    mod.show(1000);
+                }
+            });
+          this.updatePlayback(true)
+
+        }else{
+          let modules =
+                MM.getModules().filter(m => {
+                    return (m.name === "MMM-Spotify");
+                });
+          if (typeof modules === "undefined") { return; }
+          modules.forEach((mod) => {
+                if (!mod.hidden) {
+                    mod.hide(1000);
+                }
+            });
+        }
           this.updateCurrentPlayback(payload)
+
         } else {
           this.currentPlayback = null
           this.updateDom()
         }
+
         break
       case "CURRENT_NOPLAYBACK":
         this.updatePlayback(false)
@@ -128,6 +156,13 @@ Module.register("MMM-Spotify", {
     }
     if (noti.search("DONE_") > -1) {
       this.sendNotification(noti)
+    }
+    if (noti == "GET_STATUS") {
+      if (this.currentPlayback){
+        this.sendSocketNotification(noti,this.currentPlayback.is_playing)
+      }else{
+        this.sendSocketNotification(noti,false)
+      }
     }
   },
 

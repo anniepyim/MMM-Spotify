@@ -6,6 +6,7 @@
 const fs = require("fs")
 const path = require("path")
 const Spotify = require("./Spotify.js")
+const url = require("url");
 
 var NodeHelper = require("node_helper")
 
@@ -16,8 +17,36 @@ module.exports = NodeHelper.create({
     this.spotify = null
     this.timer = null
     this.firstStart = true
-  },
+    this.playing = null
 
+    this.expressApp.get('/spotify', (req, res) => {
+
+      var query = url.parse(req.url, true).query;
+      var notification = query.notification;
+      var payload = {
+        query: {
+          q: query.q,
+          type: query.type,
+        },
+        condition: {
+          random: query.random,
+          autoplay: query.autoplay,
+        }
+      }
+
+      if (notification == "GET_STATUS"){
+        this.sendSocketNotification(notification);
+        let hi = this
+        setTimeout(function () {
+            // console.log("wait");
+            res.send({"status": "success", "notification": notification, "is_playing": String(hi.playing)});}, 1000);
+      }
+      else{
+        this.socketNotificationReceived(notification, payload);
+        res.send({"status": "success", "notification": notification, "payload": payload});}
+
+    });
+  },
   doSpotifyConfig: function (configuration, account) {
     if (!isNaN(account) && Array.isArray(configuration)) {
       return configuration[account] // only wanted account or first
@@ -119,10 +148,14 @@ module.exports = NodeHelper.create({
     if (noti == "INIT") {
       this.initAfterLoading(payload)
       this.sendSocketNotification("INITIALIZED")
+      this.spotify.transferByName("anniepyim")
       return
     }
     if (noti == "ACCOUNT") {
       this.account(payload)
+    }
+    if (noti == "GET_STATUS") {
+      this.playing = payload
     }
     if(this.spotify){
       if (noti == "GET_DEVICES") {
@@ -136,6 +169,7 @@ module.exports = NodeHelper.create({
             //console.log(error)
             return
           }
+          this.spotify.transferByName("anniepyim")
           this.sendSocketNotification("DONE_PLAY", result)
         })
       }
@@ -181,6 +215,7 @@ module.exports = NodeHelper.create({
       }
     }
     if (noti == "SEARCH_AND_PLAY") {
+      this.spotify.transferByName("anniepyim")
       this.searchAndPlay(payload.query, payload.condition)
       return
     }
