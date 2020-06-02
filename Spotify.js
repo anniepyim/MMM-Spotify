@@ -25,7 +25,7 @@ class Spotify {
         "AUTH_PATH": "/callback",
         "AUTH_PORT": "8888",
         "SCOPE": "user-read-private app-remote-control playlist-read-private streaming user-read-playback-state user-modify-playback-state",
-        "TOKEN": "./token.json",
+        "TOKEN": "./username_token.json",
       }
     }
     this.redirect_uri = null
